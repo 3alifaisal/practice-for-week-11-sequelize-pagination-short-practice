@@ -11,17 +11,12 @@ const { Musician, Band, Instrument } = require('./db/models');
 
 // Express using json - DO NOT MODIFY
 app.use(express.json());
-
+app.use(paginate)
 
 app.get('/musicians', async (req, res, next) => {
-    // Parse the query params, set default values, and create appropriate
-    // offset and limit values if necessary.
-    // Your code here
     
-    // Query for all musicians
-    // Include attributes for `id`, `firstName`, and `lastName`
-    // Include associated bands and their `id` and `name`
-    // Order by musician `lastName` then `firstName`
+  const {size, offset} = req.paginate
+
     const musicians = await Musician.findAll({ 
         order: [['lastName'], ['firstName']], 
         attributes: ['id', 'firstName', 'lastName'],
@@ -29,11 +24,15 @@ app.get('/musicians', async (req, res, next) => {
             model: Band,
             attributes: ['id', 'name']
         }],
+
         // add limit key-value to query
         // add offset key-value to query
         // Your code here
+        limit: size,
+        offset
+        
     });
-
+ 
     res.json(musicians)
 });
 
@@ -43,7 +42,7 @@ app.get('/bands', async (req, res, next) => {
     // Parse the query params, set default values, and create appropriate
     // offset and limit values if necessary.
     // Your code here
-    
+    const {size, offset} = req.paginate
     // Query for all bands
     // Include attributes for `id` and `name`
     // Include associated musicians and their `id`, `firstName`, and `lastName`
@@ -58,6 +57,8 @@ app.get('/bands', async (req, res, next) => {
         // add limit key-value to query
         // add offset key-value to query
         // Your code here
+         limit: size,
+        offset
     });
 
     res.json(bands)
@@ -69,7 +70,7 @@ app.get('/instruments', async (req, res, next) => {
     // Parse the query params, set default values, and create appropriate
     // offset and limit values if necessary.
     // Your code here
-    
+    const {size, offset} = req.paginate
     // Query for all instruments
     // Include attributes for `id` and `type`
     // Include associated musicians and their `id`, `firstName` and `lastName`
@@ -92,6 +93,8 @@ app.get('/instruments', async (req, res, next) => {
         // add limit key-value to query
         // add offset key-value to query
         // Your code here
+          limit: size,
+          offset
     });
 
     res.json(instruments)
@@ -99,7 +102,20 @@ app.get('/instruments', async (req, res, next) => {
 
 // ADVANCED BONUS: Reduce Pagination Repetition
 // Your code here
+function paginate(req,res,next) {
+     let page = req.query.page ? parseInt(req.query.page) : 1;
+     let size = req.query.size ? parseInt(req.query.size) : 5;
 
+    if (page === 0) {
+        page = null;
+        size = null;
+    }
+
+    const offset = size * (page ? page - 1 : 0);
+
+    req.paginate = {size, offset};
+    next();
+}
 
 // Root route - DO NOT MODIFY
 app.get('/', (req, res) => {
